@@ -31,7 +31,7 @@ jobs:
           url = f"https://api.cloudinary.com/v1_1/{cloud}/resources/image"
           params = urllib.parse.urlencode({
               "type": "upload",
-              "asset_folder": "bento-menu/",
+              "asset_folder": "bento-menu",
               "max_results": 500
           })
           req = urllib.request.Request(f"{url}?{params}")
@@ -44,7 +44,7 @@ jobs:
           cutoff = now - timedelta(days=30)
           menu = {}
 
-for r in resources:
+          for r in resources:
               created = datetime.fromisoformat(r["created_at"].replace("Z", "+00:00"))
               if created < cutoff:
                   continue
