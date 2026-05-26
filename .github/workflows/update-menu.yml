@@ -31,7 +31,7 @@ jobs:
           url = f"https://api.cloudinary.com/v1_1/{cloud}/resources/image"
           params = urllib.parse.urlencode({
               "type": "upload",
-              "prefix": "bento-menu/",
+              "asset_folder": "bento-menu/",
               "max_results": 500
           })
           req = urllib.request.Request(f"{url}?{params}")
