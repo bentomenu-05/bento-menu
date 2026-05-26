@@ -48,8 +48,8 @@ jobs:
               created = datetime.fromisoformat(r["created_at"].replace("Z", "+00:00"))
               if created < cutoff:
                   continue
-              folder = r.get("asset_folder", "")
-              if folder != "bento-menu":
+　　　　　　　　public_id = r.get("public_id", "")
+              if not public_id.startswith("bento-menu/"):
                   continue
               if not r["secure_url"].lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
                   continue
