@@ -1,19 +1,15 @@
 name: Update Bento Menu
-
 on:
   schedule:
     - cron: '0 0 * * *'
   workflow_dispatch:
-
 permissions:
   contents: write
-
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Generate menu.json from Cloudinary
         env:
           CLOUD_NAME: ${{ secrets.CLOUD_NAME }}
@@ -23,46 +19,35 @@ jobs:
           python3 << 'EOF'
           import urllib.request, urllib.parse, json, base64, os
           from datetime import datetime, timezone, timedelta
-
           cloud = os.environ['CLOUD_NAME']
-          key   = os.environ['API_KEY']
-          secret= os.environ['API_SECRET']
-
+          key = os.environ['API_KEY']
+          secret = os.environ['API_SECRET']
           url = f"https://api.cloudinary.com/v1_1/{cloud}/resources/image"
-          params = urllib.parse.urlencode({
-              "type": "upload",
-              "asset_folder": "bento-menu",
-              "max_results": 500
-          })
+          params = urllib.parse.urlencode({"type":"upload","max_results":500})
           req = urllib.request.Request(f"{url}?{params}")
           creds = base64.b64encode(f"{key}:{secret}".encode()).decode()
           req.add_header("Authorization", f"Basic {creds}")
           res = urllib.request.urlopen(req)
           resources = json.loads(res.read())["resources"]
-
           now = datetime.now(timezone.utc)
           cutoff = now - timedelta(days=30)
           menu = {}
-
           for r in resources:
               created = datetime.fromisoformat(r["created_at"].replace("Z", "+00:00"))
               if created < cutoff:
                   continue
-　　　　　　　　public_id = r.get("public_id", "")
+              public_id = r.get("public_id", "")
               if not public_id.startswith("bento-menu/"):
                   continue
-              if not r["secure_url"].lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
+              if not r["secure_url"].lower().endswith((".jpg",".jpeg",".png",".webp")):
                   continue
               year, week, _ = created.isocalendar()
               label = f"{year}年 第{week}週"
-              img_url = r["secure_url"]
-              menu.setdefault(label, []).append(img_url)
-
+              menu.setdefault(label, []).append(r["secure_url"])
           with open("menu.json", "w") as f:
               json.dump(menu, f, ensure_ascii=False, indent=2)
           print(f"生成完了: {sum(len(v) for v in menu.values())}枚")
           EOF
-
       - name: Commit and push
         run: |
           git config user.name "github-actions"
