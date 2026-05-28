@@ -32,17 +32,26 @@ jobs:
           now = datetime.now(timezone.utc)
           cutoff = now - timedelta(days=30)
           menu = {}
+          delete_ids = []
           for r in resources:
               created = datetime.fromisoformat(r["created_at"].replace("Z", "+00:00"))
-              if created < cutoff:
-                  continue
               if r.get("asset_folder","") != "bento-menu":
+                  continue
+              if created < cutoff:
+                  delete_ids.append(r["public_id"])
                   continue
               if not r["secure_url"].lower().endswith((".jpg",".jpeg",".png",".webp")):
                   continue
               year, week, _ = created.isocalendar()
               label = f"{year}年 第{week}週"
               menu.setdefault(label, []).append(r["secure_url"])
+          if delete_ids:
+              del_url = f"https://api.cloudinary.com/v1_1/{cloud}/resources/image/upload"
+              del_params = urllib.parse.urlencode([("public_ids[]", pid) for pid in delete_ids])
+              del_req = urllib.request.Request(f"{del_url}?{del_params}", method="DELETE")
+              del_req.add_header("Authorization", f"Basic {base64.b64encode(f'{key}:{secret}'.encode()).decode()}")
+              urllib.request.urlopen(del_req)
+              print(f"削除完了: {len(delete_ids)}枚")
           with open("menu.json", "w") as f:
               json.dump(menu, f, ensure_ascii=False, indent=2)
           print(f"生成完了: {sum(len(v) for v in menu.values())}枚")
