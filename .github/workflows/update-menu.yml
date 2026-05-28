@@ -29,24 +29,12 @@ jobs:
           req.add_header("Authorization", f"Basic {creds}")
           res = urllib.request.urlopen(req)
           resources = json.loads(res.read())["resources"]
-          now = datetime.now(timezone.utc)
-          cutoff = now - timedelta(days=30)
-          menu = {}
-          for r in resources:
-              created = datetime.fromisoformat(r["created_at"].replace("Z", "+00:00"))
-              if created < cutoff:
-                  continue
-              public_id = r.get("public_id", "")
-              if not public_id.startswith("bento-menu/"):
-                  continue
-              if not r["secure_url"].lower().endswith((".jpg",".jpeg",".png",".webp")):
-                  continue
-              year, week, _ = created.isocalendar()
-              label = f"{year}年 第{week}週"
-              menu.setdefault(label, []).append(r["secure_url"])
-          with open("menu.json", "w") as f:
-              json.dump(menu, f, ensure_ascii=False, indent=2)
-          print(f"生成完了: {sum(len(v) for v in menu.values())}枚")
+          print(f"総画像数: {len(resources)}枚")
+          for r in resources[:5]:
+              print("public_id:", r.get("public_id",""))
+              print("asset_folder:", r.get("asset_folder",""))
+              print("url:", r.get("secure_url","")[:80])
+              print("---")
           EOF
       - name: Commit and push
         run: |
